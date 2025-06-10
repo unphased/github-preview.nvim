@@ -13,7 +13,7 @@ export async function onCursorMove(
 
     // Create autocmd to notify us with event "CursorMove"
     await app.nvim.call("nvim_create_autocmd", [
-        ["CursorHold", "CursorHoldI"],
+        ["CursorMoved", "CursorMovedI"],
         {
             group: app.augroupId,
             desc: "Notify github-preview",
