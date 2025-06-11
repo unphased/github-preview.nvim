@@ -2,7 +2,7 @@ import { type MutableRefObject } from "react";
 import { type RefObject } from "../websocket-provider/context";
 
 let currentAnimationId: number | null = null;
-const SMOOTHING_FACTOR = 0.15; // Adjust for desired smoothness/speed (e.g., 0.1 for slower, 0.3 for faster)
+const SMOOTHING_FACTOR = 0.05; // Adjust for desired smoothness/speed (e.g., 0.1 for slower, 0.3 for faster)
 
 function animateScroll(element: HTMLElement, targetY: number) {
     if (currentAnimationId !== null) {
