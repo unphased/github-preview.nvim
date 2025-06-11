@@ -87,6 +87,7 @@ export type WsServerMessage =
           currentPath: string;
           config: GithubPreview["config"];
           cursorLine: number | null;
+          cursorCol: number | null;
           currentEntries: string[] | undefined;
       }
     | {
@@ -99,12 +100,14 @@ export type WsServerMessage =
           currentPath: string;
           lines: string[];
           cursorLine: number | null;
+          cursorCol: number | null;
           hash: string | undefined;
           currentEntries: string[] | undefined;
       }
     | {
           type: "cursor_move";
           cursorLine: number | null;
+          cursorCol: number | null;
           currentPath: string;
           lines?: string[];
       }
@@ -167,7 +170,7 @@ export interface CustomEvents extends BaseEvents {
     notifications: {
         // github-preview
         attach_buffer: [buffer: number, path: string];
-        cursor_move: [buffer: number, path: string, cursor_line: number];
+        cursor_move: [buffer: number, path: string, cursor_line: number, cursor_col: number];
 
         // neovim native
         nvim_buf_detach_event: [buffer: number];

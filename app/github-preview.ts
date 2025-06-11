@@ -48,6 +48,7 @@ export class GithubPreview {
     repoName: string;
     server: Server;
     cursorLine: null | number = null;
+    cursorCol: null | number = null;
     lines: ContentChange["lines"] = [];
 
     private constructor(nvim: Nvim, augroupId: number, repoName: string, props: PluginProps) {

@@ -45,6 +45,7 @@ export function websocketHandler(app: GithubPreview): WebSocketHandler {
                     lines: app.lines,
                     config: app.config,
                     cursorLine: app.cursorLine,
+                    cursorCol: app.cursorCol,
                     currentEntries: entries,
                 };
                 wsSend(message);
@@ -68,9 +69,10 @@ export function websocketHandler(app: GithubPreview): WebSocketHandler {
 
                 const isDir = browserMessage.path.endsWith("/");
 
-                // is same path, keep cursorLine
-                const cursorLine =
-                    browserMessage.path === app.currentPath && !isDir ? app.cursorLine : null;
+                // is same path, keep cursorLine and cursorCol
+                const isSamePathNonDir = browserMessage.path === app.currentPath && !isDir;
+                const cursorLine = isSamePathNonDir ? app.cursorLine : null;
+                const cursorCol = isSamePathNonDir ? app.cursorCol : null;
 
                 // list of entries if path is dir, otherwise undefined
                 const entries = await app.setCurrPath(browserMessage.path);
@@ -80,6 +82,7 @@ export function websocketHandler(app: GithubPreview): WebSocketHandler {
                     currentPath: app.currentPath,
                     lines: app.lines,
                     cursorLine: cursorLine,
+                    cursorCol: cursorCol,
                     hash: hash,
                     currentEntries: entries,
                 };
