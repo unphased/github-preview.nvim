@@ -23,6 +23,11 @@ Display a visual marker (e.g., a blinking caret or a subtle highlight) at the pr
         *   When `app.wsSend` is called for a `cursor_move` message, it should include the `cursorCol`. (DONE)
         *   Consider if `cursorCol` should also be part of the `init` and `entry` messages if a cursor position is relevant then. (DONE - `init` and `entry` messages in `app/server/websocket.ts` already updated)
 
+**Phase 1.5: Fix newly found bug behavior: the rAF autoscroll toward neovim current cursor line does not relax.**
+- The thing we recently added to take control over the target scrolling is working but not going into an idle mode.
+basically it keeps pulling us toward the targeted scroll position even when no events are coming in so it makes it
+impossible to temporarily browse the rest of the file from the web app interface.
+
 **Phase 2: Frontend - Receiving and Preparing for the Inline Cursor**
 
 2.  **Web App - State Management:**
