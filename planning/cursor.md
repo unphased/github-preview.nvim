@@ -16,12 +16,12 @@ Display a visual marker (e.g., a blinking caret or a subtle highlight) at the pr
     *   **Update Types (`app/types.ts`):**
         *   Adjust the `CustomEvents["notifications"]["cursor_move"]` tuple type to include this new column number.
         *   Modify the `WsServerMessage` for `type: "cursor_move"` to include a new field, e.g., `cursorCol: number | null`.
-    *   **Backend Logic (`app/github-preview.ts`):**
-        *   The `GithubPreview` class will need to store this `cursorCol`.
-        *   The handler for the Neovim `cursor_move` notification (which is set up where `GithubPreview.start()` is called and `onCursorMove` is registered) will receive the column.
-        *   This handler should update `app.cursorCol`.
-        *   When `app.wsSend` is called for a `cursor_move` message, it should include the `cursorCol`.
-        *   Consider if `cursorCol` should also be part of the `init` and `entry` messages if a cursor position is relevant then.
+    *   **Backend Logic (`app/github-preview.ts`, `app/index.ts`):**
+        *   The `GithubPreview` class will need to store this `cursorCol`. (DONE)
+        *   The handler for the Neovim `cursor_move` notification (in `app/index.ts` where `onCursorMove` is registered) will receive the column. (DONE)
+        *   This handler should update `app.cursorCol`. (DONE)
+        *   When `app.wsSend` is called for a `cursor_move` message, it should include the `cursorCol`. (DONE)
+        *   Consider if `cursorCol` should also be part of the `init` and `entry` messages if a cursor position is relevant then. (DONE - `init` and `entry` messages in `app/server/websocket.ts` already updated)
 
 **Phase 2: Frontend - Receiving and Preparing for the Inline Cursor**
 

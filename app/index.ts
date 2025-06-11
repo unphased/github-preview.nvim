@@ -21,16 +21,17 @@ await onBeforeExit(app, async () => {
 
 await onCursorMove(
     app,
-    async ([buffer, path, cursor_line]: CustomEvents["notifications"]["cursor_move"]) => {
+    async ([buffer, path, cursor_line, cursor_col]: CustomEvents["notifications"]["cursor_move"]) => {
         const relativePath = relative(app.root, path);
         if (!path || (app.config.overrides.single_file && relativePath !== app.currentPath)) return;
         app.nvim.logger?.verbose({
-            ON_CURSOR_MOVE: { buffer, path: relativePath, cursorLine: cursor_line },
+            ON_CURSOR_MOVE: { buffer, path: relativePath, cursorLine: cursor_line, cursorCol: cursor_col },
         });
 
         const message: WsServerMessage = {
             type: "cursor_move",
             cursorLine: cursor_line,
+            cursorCol: cursor_col,
             currentPath: relativePath,
         };
 
@@ -40,6 +41,7 @@ await onCursorMove(
         }
 
         app.cursorLine = message.cursorLine;
+        app.cursorCol = message.cursorCol;
         app.currentPath = message.currentPath;
 
         app.wsSend(message);
