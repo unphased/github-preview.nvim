@@ -34,8 +34,14 @@ export const CursorLine = ({ offsets, cursorLineElement, markdownContainerElemen
         if (!markdownContainerElement) return;
 
         const handleManualScroll = () => {
-            if (refObject.current && !refObject.current.isAutoScrolling) {
+            if (refObject.current) {
+                // If an animation is running, this flag will be seen by its next tick.
+                // If no animation is running, this flag prevents new auto-scrolls.
                 refObject.current.userInterruptedScroll = true;
+                console.log(
+                    "handleManualScroll: userInterruptedScroll set to true. isAutoScrolling:",
+                    refObject.current.isAutoScrolling,
+                );
             }
         };
 

@@ -15,6 +15,17 @@ function animateScroll(
     refObject.current.isAutoScrolling = true;
 
     const step = () => {
+        // Check if user interrupted the scroll
+        if (refObject.current.userInterruptedScroll) {
+            if (currentAnimationId !== null) {
+                cancelAnimationFrame(currentAnimationId);
+            }
+            currentAnimationId = null;
+            refObject.current.isAutoScrolling = false;
+            // Do not reset userInterruptedScroll here; it's reset by new cursor events from vim
+            return;
+        }
+
         const currentY = element.scrollTop;
         const diff = targetY - currentY;
 
