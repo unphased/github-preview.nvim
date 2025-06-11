@@ -9,13 +9,13 @@ Here's a game plan for how we can approach this, focusing on the markdown render
 **Overall Goal:**
 Display a visual marker (e.g., a blinking caret or a subtle highlight) at the precise character position corresponding to the Neovim cursor within the rendered markdown content. This will only apply to markdown files; other file types will continue to use the existing line-highlighting.
 
-**Phase 1: Transmitting Precise Cursor Position from Neovim**
+**Phase 1: Transmitting Precise Cursor Position from Neovim** (DONE)
 
 1.  **Neovim - Send Column Data:**
-    *   **Modify Lua Script (`app/nvim/on-cursor-move.ts`):** Update the `nvim_create_autocmd` for `CursorMoved` / `CursorMovedI`. The Lua command needs to fetch not only the line number (`vim.api.nvim_win_get_cursor(0)[1]`) but also the column number (`vim.api.nvim_win_get_cursor(0)[2]`). This column number should be sent in the `rpcnotify` call.
+    *   **Modify Lua Script (`app/nvim/on-cursor-move.ts`):** Update the `nvim_create_autocmd` for `CursorMoved` / `CursorMovedI`. The Lua command needs to fetch not only the line number (`vim.api.nvim_win_get_cursor(0)[1]`) but also the column number (`vim.api.nvim_win_get_cursor(0)[2]`). This column number should be sent in the `rpcnotify` call. (DONE)
     *   **Update Types (`app/types.ts`):**
-        *   Adjust the `CustomEvents["notifications"]["cursor_move"]` tuple type to include this new column number.
-        *   Modify the `WsServerMessage` for `type: "cursor_move"` to include a new field, e.g., `cursorCol: number | null`.
+        *   Adjust the `CustomEvents["notifications"]["cursor_move"]` tuple type to include this new column number. (DONE)
+        *   Modify the `WsServerMessage` for `type: "cursor_move"` to include a new field, e.g., `cursorCol: number | null`. (DONE)
     *   **Backend Logic (`app/github-preview.ts`, `app/index.ts`):**
         *   The `GithubPreview` class will need to store this `cursorCol`. (DONE)
         *   The handler for the Neovim `cursor_move` notification (in `app/index.ts` where `onCursorMove` is registered) will receive the column. (DONE)
