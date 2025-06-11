@@ -176,6 +176,7 @@ export function scroll(
     cursorLineElement: HTMLElement,
     refObject: MutableRefObject<RefObject>,
 ) {
+    console.log("scroll called. cursorLine:", cursorLine, "userInterruptedScroll:", refObject.current.userInterruptedScroll, "topOffsetPct:", topOffsetPct);
     if (!offsets.length) {
         // without offsets we can't scroll
         return;
