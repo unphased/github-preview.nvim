@@ -1,6 +1,31 @@
 import { type MutableRefObject } from "react";
 import { type RefObject } from "../websocket-provider/context";
 
+let currentAnimationId: number | null = null;
+const SMOOTHING_FACTOR = 0.15; // Adjust for desired smoothness/speed (e.g., 0.1 for slower, 0.3 for faster)
+
+function animateScroll(element: HTMLElement, targetY: number) {
+    if (currentAnimationId !== null) {
+        cancelAnimationFrame(currentAnimationId);
+    }
+
+    const step = () => {
+        const currentY = element.scrollTop;
+        const diff = targetY - currentY;
+
+        // Stop if very close to target or if target is effectively reached
+        if (Math.abs(diff) < 0.5) {
+            element.scrollTop = targetY;
+            currentAnimationId = null;
+        } else {
+            element.scrollTop += diff * SMOOTHING_FACTOR;
+            currentAnimationId = requestAnimationFrame(step);
+        }
+    };
+
+    currentAnimationId = requestAnimationFrame(step);
+}
+
 type Attrs = {
     offsetTop: number;
     scrollHeight: number;
@@ -162,6 +187,10 @@ export function scroll(
 
     if (scrollToLine === null) {
         if (!window.location.hash) {
+            if (currentAnimationId !== null) {
+                cancelAnimationFrame(currentAnimationId);
+                currentAnimationId = null;
+            }
             markdownContainerElement.scrollTo({ top: 0, behavior: "instant" });
             return;
         }
@@ -192,11 +221,10 @@ export function scroll(
     }
 
     const percent = topOffsetPct / 100;
-    markdownContainerElement.scrollTo({
-        top:
-            cursorLineOffset[0] +
-            markdownContainerElement.offsetTop -
-            window.screen.height * percent,
-        behavior: cursorLine === null ? "instant" : "smooth",
-    });
+    const targetScrollY =
+        cursorLineOffset[0] +
+        markdownContainerElement.offsetTop -
+        window.screen.height * percent;
+
+    animateScroll(markdownContainerElement, targetScrollY);
 }
