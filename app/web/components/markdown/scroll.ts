@@ -4,10 +4,15 @@ import { type RefObject } from "../websocket-provider/context";
 let currentAnimationId: number | null = null;
 const SMOOTHING_FACTOR = 0.05; // Adjust for desired smoothness/speed (e.g., 0.1 for slower, 0.3 for faster)
 
-function animateScroll(element: HTMLElement, targetY: number) {
+function animateScroll(
+    element: HTMLElement,
+    targetY: number,
+    refObject: MutableRefObject<RefObject>,
+) {
     if (currentAnimationId !== null) {
         cancelAnimationFrame(currentAnimationId);
     }
+    refObject.current.isAutoScrolling = true;
 
     const step = () => {
         const currentY = element.scrollTop;
@@ -17,6 +22,7 @@ function animateScroll(element: HTMLElement, targetY: number) {
         if (Math.abs(diff) < 0.5) {
             element.scrollTop = targetY;
             currentAnimationId = null;
+            refObject.current.isAutoScrolling = false;
         } else {
             element.scrollTop += diff * SMOOTHING_FACTOR;
             currentAnimationId = requestAnimationFrame(step);
@@ -190,8 +196,10 @@ export function scroll(
             if (currentAnimationId !== null) {
                 cancelAnimationFrame(currentAnimationId);
                 currentAnimationId = null;
+                refObject.current.isAutoScrolling = false;
             }
             markdownContainerElement.scrollTo({ top: 0, behavior: "instant" });
+            refObject.current.userInterruptedScroll = false; // Reset interruption on navigating to top
             return;
         }
 
@@ -215,8 +223,8 @@ export function scroll(
 
     cursorLineElement.style.setProperty("top", `${cursorLineOffset[0]}px`);
 
-    if (typeof topOffsetPct !== "number") {
-        // this means the user disabled synced scroll
+    if (typeof topOffsetPct !== "number" || refObject.current.userInterruptedScroll) {
+        // User disabled synced scroll or has manually scrolled
         return;
     }
 
@@ -226,5 +234,5 @@ export function scroll(
         markdownContainerElement.offsetTop -
         window.screen.height * percent;
 
-    animateScroll(markdownContainerElement, targetScrollY);
+    animateScroll(markdownContainerElement, targetScrollY, refObject);
 }

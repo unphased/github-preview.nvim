@@ -18,13 +18,33 @@ export const CursorLine = ({ offsets, cursorLineElement, markdownContainerElemen
         registerHandler("cursor-line", (message) => {
             if ("cursorLine" in message) {
                 setCursorLine(message.cursorLine);
+                // New cursor position from Neovim, so allow auto-scroll again
+                if (refObject.current) {
+                    refObject.current.userInterruptedScroll = false;
+                }
             }
         });
-    }, [registerHandler]);
+    }, [registerHandler, refObject]);
 
     const overrides = config?.overrides;
     const lineColor = !overrides?.cursor_line.disable && overrides?.cursor_line.color;
     const topOffsetPct = overrides?.scroll.disable ? null : overrides?.scroll.top_offset_pct;
+
+    useEffect(() => {
+        if (!markdownContainerElement) return;
+
+        const handleManualScroll = () => {
+            if (refObject.current && !refObject.current.isAutoScrolling) {
+                refObject.current.userInterruptedScroll = true;
+            }
+        };
+
+        markdownContainerElement.addEventListener("scroll", handleManualScroll, { passive: true });
+
+        return () => {
+            markdownContainerElement.removeEventListener("scroll", handleManualScroll);
+        };
+    }, [markdownContainerElement, refObject]);
 
     useEffect(() => {
         if (!cursorLineElement || !markdownContainerElement) return;
@@ -32,14 +52,17 @@ export const CursorLine = ({ offsets, cursorLineElement, markdownContainerElemen
         if (refObject.current.skipScroll) {
             refObject.current.skipScroll = false;
         } else {
-            scroll(
-                markdownContainerElement,
-                topOffsetPct,
-                offsets,
-                cursorLine,
-                cursorLineElement,
-                refObject,
-            );
+            // Only scroll if not interrupted by user
+            if (!refObject.current.userInterruptedScroll) {
+                scroll(
+                    markdownContainerElement,
+                    topOffsetPct,
+                    offsets,
+                    cursorLine,
+                    cursorLineElement,
+                    refObject,
+                );
+            }
         }
     }, [markdownContainerElement, cursorLineElement, topOffsetPct, cursorLine, refObject, offsets]);
 

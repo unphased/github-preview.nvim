@@ -13,6 +13,8 @@ export type RefObject = {
         lineStart: number | undefined;
         lineEnd: number | undefined;
     };
+    isAutoScrolling: boolean;
+    userInterruptedScroll: boolean;
 };
 
 export type MessageHandler = (message: WsServerMessage) => void | Promise<void>;
