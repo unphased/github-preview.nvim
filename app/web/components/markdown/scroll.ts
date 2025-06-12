@@ -4,6 +4,8 @@ import { type RefObject } from "../websocket-provider/context";
 let currentAnimationId: number | null = null;
 const SCROLL_HALFLIFE = 0.1; // Adjust for desired smoothness/speed. Defines the duration in time to go halfway to the target.
 
+let frameRate = 20; // converges on the actual frame rate of user
+
 function animateScroll(
     element: HTMLElement,
     targetY: number,
@@ -15,7 +17,9 @@ function animateScroll(
     }
     // isAutoScrolling is now set by the caller (e.g., upon Vim event)
 
-    let lastTimestamp = performance.now()
+    console.log('(1/frameRate * 1000):', (1/frameRate * 1000));
+    let lastTimestamp = performance.now() - (1/frameRate * 1000);
+    let lastScrollTop = -1;
     const step = () => {
         // If auto-scrolling was turned off (e.g., by user scroll), stop animation.
         if (!refObject.current.isAutoScrolling) {
@@ -30,12 +34,19 @@ function animateScroll(
         const currentY = element.scrollTop;
         const diff = targetY - currentY;
         const now = performance.now();
-        const dt = (now - lastTimestamp) * 1000; // units of seconds
+        const dt = (now - lastTimestamp) / 1000; // units of seconds
         lastTimestamp = now;
+        frameRate = frameRate * 0.9 + (1/dt) * 0.1; // converge on the framerate we measure
+        console.log('frameRate:', frameRate, dt);
+        const alpha = 1.0 - (0.5 ** (1 / frameRate / SCROLL_HALFLIFE));
+        const delta = diff * alpha;
 
+        console.log('delta:', delta);
+        console.log('element.scrollTop, target:', element.scrollTop, targetY);
         // Stop if very close to target or if target is effectively reached
-        if (Math.abs(diff) < 0.5) { // Target reached
-            element.scrollTop = targetY;
+        if (lastScrollTop == element.scrollTop) { // the delta is too small, ready to terminate autoscroll
+            console.log('ENDING');
+            // element.scrollTop = targetY;
             if (currentAnimationId !== null) {
                 cancelAnimationFrame(currentAnimationId);
             }
@@ -44,8 +55,8 @@ function animateScroll(
                 refObject.current.isAutoScrolling = false; // Animation complete, stop auto-scrolling
             }
         } else {
-            const alpha = 1.0 - 0.5 ** (dt / SCROLL_HALFLIFE);
-            element.scrollTop += diff * alpha;
+            lastScrollTop = element.scrollTop;
+            element.scrollTop += delta;
             currentAnimationId = requestAnimationFrame(step);
         }
     };
