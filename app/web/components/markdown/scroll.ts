@@ -11,18 +11,18 @@ function animateScroll(
 ) {
     if (currentAnimationId !== null) {
         cancelAnimationFrame(currentAnimationId);
+        currentAnimationId = null; // Ensure it's cleared before starting a new one
     }
-    refObject.current.isAutoScrolling = true;
+    // isAutoScrolling is now set by the caller (e.g., upon Vim event)
 
     const step = () => {
-        // Check if user interrupted the scroll
-        if (refObject.current.userInterruptedScroll) {
+        // If auto-scrolling was turned off (e.g., by user scroll), stop animation.
+        if (!refObject.current.isAutoScrolling) {
             if (currentAnimationId !== null) {
                 cancelAnimationFrame(currentAnimationId);
             }
             currentAnimationId = null;
-            refObject.current.isAutoScrolling = false;
-            // Do not reset userInterruptedScroll here; it's reset by new cursor events from vim
+            // isAutoScrolling is already false, no need to set it again here.
             return;
         }
 
@@ -30,10 +30,15 @@ function animateScroll(
         const diff = targetY - currentY;
 
         // Stop if very close to target or if target is effectively reached
-        if (Math.abs(diff) < 0.5) {
+        if (Math.abs(diff) < 0.5) { // Target reached
             element.scrollTop = targetY;
+            if (currentAnimationId !== null) {
+                cancelAnimationFrame(currentAnimationId);
+            }
             currentAnimationId = null;
-            refObject.current.isAutoScrolling = false;
+            if (refObject.current) { // Check if refObject.current still exists
+                refObject.current.isAutoScrolling = false; // Animation complete, stop auto-scrolling
+            }
         } else {
             element.scrollTop += diff * SMOOTHING_FACTOR;
             currentAnimationId = requestAnimationFrame(step);
@@ -187,7 +192,7 @@ export function scroll(
     cursorLineElement: HTMLElement,
     refObject: MutableRefObject<RefObject>,
 ) {
-    console.log("scroll called. cursorLine:", cursorLine, "userInterruptedScroll:", refObject.current.userInterruptedScroll, "topOffsetPct:", topOffsetPct);
+    console.log("scroll called. cursorLine:", cursorLine, "isAutoScrolling:", refObject.current.isAutoScrolling, "topOffsetPct:", topOffsetPct);
     if (!offsets.length) {
         // without offsets we can't scroll
         return;
@@ -208,10 +213,11 @@ export function scroll(
             if (currentAnimationId !== null) {
                 cancelAnimationFrame(currentAnimationId);
                 currentAnimationId = null;
-                refObject.current.isAutoScrolling = false;
             }
             markdownContainerElement.scrollTo({ top: 0, behavior: "instant" });
-            refObject.current.userInterruptedScroll = false; // Reset interruption on navigating to top
+            if (refObject.current) {
+                refObject.current.isAutoScrolling = false; // Stop auto-scrolling
+            }
             return;
         }
 
@@ -235,8 +241,8 @@ export function scroll(
 
     cursorLineElement.style.setProperty("top", `${cursorLineOffset[0]}px`);
 
-    if (typeof topOffsetPct !== "number" || refObject.current.userInterruptedScroll) {
-        // User disabled synced scroll or has manually scrolled
+    if (typeof topOffsetPct !== "number" || !refObject.current.isAutoScrolling) {
+        // User disabled synced scroll or auto-scrolling is not active
         return;
     }
 

@@ -27,10 +27,11 @@ Display a visual marker (e.g., a blinking caret or a subtle highlight) at the pr
 - The thing we recently added to take control over the target scrolling is working but not going into an idle mode.
 basically it keeps pulling us toward the targeted scroll position even when no events are coming in so it makes it
 impossible to temporarily browse the rest of the file from the web app interface.
-- Implemented `isAutoScrolling` and `userInterruptedScroll` flags in `RefObject`.
-- `animateScroll` now manages `isAutoScrolling`.
-- `scroll` function respects `userInterruptedScroll` and resets it when appropriate.
-- `CursorLine` component resets `userInterruptedScroll` on new Neovim cursor updates and sets it on manual scroll.
+- Simplified scroll state management to a single `isAutoScrolling` flag in `RefObject`.
+- `isAutoScrolling` is set to `true` upon receiving a new cursor position from Neovim.
+- The `scroll` event listener sets `isAutoScrolling` to `false` if a scroll occurs while it was `true`, effectively stopping the animation.
+- `animateScroll` loop checks `isAutoScrolling` on each frame and stops if it's `false`.
+- `animateScroll` sets `isAutoScrolling` to `false` when the scroll target is reached.
 
 **Phase 2: Frontend - Receiving and Preparing for the Inline Cursor**
 

@@ -18,9 +18,10 @@ export const CursorLine = ({ offsets, cursorLineElement, markdownContainerElemen
         registerHandler("cursor-line", (message) => {
             if ("cursorLine" in message) {
                 setCursorLine(message.cursorLine);
-                // New cursor position from Neovim, so allow auto-scroll again
+                // New cursor position from Neovim, so activate auto-scroll
                 if (refObject.current) {
-                    refObject.current.userInterruptedScroll = false;
+                    refObject.current.isAutoScrolling = true;
+                    console.log("CursorLine from Vim: isAutoScrolling set to true.");
                 }
             }
         });
@@ -34,15 +35,14 @@ export const CursorLine = ({ offsets, cursorLineElement, markdownContainerElemen
         if (!markdownContainerElement) return;
 
         const handleManualScroll = () => {
-            if (refObject.current && !refObject.current.isAutoScrolling) {
-                refObject.current.userInterruptedScroll = true;
+            // If a scroll event occurs while we are auto-scrolling,
+            // assume user interaction or animation step, and stop further auto-scrolling attempts
+            // until the next Vim event.
+            if (refObject.current && refObject.current.isAutoScrolling) {
                 console.log(
-                    "handleManualScroll: User scroll detected (not auto-scrolling), userInterruptedScroll set to true.",
+                    "handleManualScroll: Scroll event detected while isAutoScrolling=true. Setting isAutoScrolling=false.",
                 );
-            } else if (refObject.current && refObject.current.isAutoScrolling) {
-                console.log(
-                    "handleManualScroll: Scroll event during auto-scroll (by animation). userInterruptedScroll not changed.",
-                );
+                refObject.current.isAutoScrolling = false;
             }
         };
 
@@ -59,17 +59,16 @@ export const CursorLine = ({ offsets, cursorLineElement, markdownContainerElemen
         if (refObject.current.skipScroll) {
             refObject.current.skipScroll = false;
         } else {
-            // Only scroll if not interrupted by user
-            if (!refObject.current.userInterruptedScroll) {
-                scroll(
-                    markdownContainerElement,
-                    topOffsetPct,
-                    offsets,
-                    cursorLine,
-                    cursorLineElement,
-                    refObject,
-                );
-            }
+            // scroll() will check refObject.current.isAutoScrolling internally
+            // to decide if it should animate.
+            scroll(
+                markdownContainerElement,
+                topOffsetPct,
+                offsets,
+                cursorLine,
+                cursorLineElement,
+                refObject,
+            );
         }
     }, [markdownContainerElement, cursorLineElement, topOffsetPct, cursorLine, refObject, offsets]);
 
