@@ -2,7 +2,7 @@ import { type MutableRefObject } from "react";
 import { type RefObject } from "../websocket-provider/context";
 
 let currentAnimationId: number | null = null;
-const SMOOTHING_FACTOR = 0.15; // Adjust for desired smoothness/speed (e.g., 0.1 for slower, 0.3 for faster)
+const SCROLL_HALFLIFE = 0.1; // Adjust for desired smoothness/speed. Defines the duration in time to go halfway to the target.
 
 function animateScroll(
     element: HTMLElement,
@@ -15,6 +15,7 @@ function animateScroll(
     }
     // isAutoScrolling is now set by the caller (e.g., upon Vim event)
 
+    let lastTimestamp = performance.now()
     const step = () => {
         // If auto-scrolling was turned off (e.g., by user scroll), stop animation.
         if (!refObject.current.isAutoScrolling) {
@@ -28,6 +29,9 @@ function animateScroll(
 
         const currentY = element.scrollTop;
         const diff = targetY - currentY;
+        const now = performance.now();
+        const dt = (now - lastTimestamp) * 1000; // units of seconds
+        lastTimestamp = now;
 
         // Stop if very close to target or if target is effectively reached
         if (Math.abs(diff) < 0.5) { // Target reached
@@ -40,7 +44,8 @@ function animateScroll(
                 refObject.current.isAutoScrolling = false; // Animation complete, stop auto-scrolling
             }
         } else {
-            element.scrollTop += diff * SMOOTHING_FACTOR;
+            const alpha = 1.0 - 0.5 ** (dt / SCROLL_HALFLIFE);
+            element.scrollTop += diff * alpha;
             currentAnimationId = requestAnimationFrame(step);
         }
     };
