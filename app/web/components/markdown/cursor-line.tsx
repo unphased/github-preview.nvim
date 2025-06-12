@@ -34,22 +34,28 @@ export const CursorLine = ({ offsets, cursorLineElement, markdownContainerElemen
     useEffect(() => {
         if (!markdownContainerElement) return;
 
-        const handleManualScroll = () => {
-            // If a scroll event occurs while we are auto-scrolling,
-            // assume user interaction or animation step, and stop further auto-scrolling attempts
-            // until the next Vim event.
+        const handleUserInteraction = (event: Event) => {
+            // If a user-initiated scroll-like event occurs while we are auto-scrolling,
+            // stop further auto-scrolling attempts until the next Vim event.
             if (refObject.current && refObject.current.isAutoScrolling) {
                 console.log(
-                    "handleManualScroll: Scroll event detected while isAutoScrolling=true. Setting isAutoScrolling=false.",
+                    `handleUserInteraction: ${event.type} event detected while isAutoScrolling=true. Setting isAutoScrolling=false.`,
                 );
                 refObject.current.isAutoScrolling = false;
             }
         };
 
-        markdownContainerElement.addEventListener("scroll", handleManualScroll, { passive: true });
+        // Listen for specific user interaction events that typically indicate scrolling intent
+        const eventsToWatch: (keyof HTMLElementEventMap)[] = ["wheel", "touchstart", "touchmove"];
+
+        eventsToWatch.forEach((eventName) => {
+            markdownContainerElement.addEventListener(eventName, handleUserInteraction, { passive: true });
+        });
 
         return () => {
-            markdownContainerElement.removeEventListener("scroll", handleManualScroll);
+            eventsToWatch.forEach((eventName) => {
+                markdownContainerElement.removeEventListener(eventName, handleUserInteraction);
+            });
         };
     }, [markdownContainerElement, refObject]);
 
